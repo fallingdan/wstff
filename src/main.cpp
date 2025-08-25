@@ -4,12 +4,14 @@
 #include <Arduino.h>
 #include <SD.h>
 
-#define SD_CARD_CS_PIN 13
+#define SD_CARD_CS_PIN 12
 
 void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);
 
     initializeNeoPixel();
-    setPixelColor(255, 0, 0);
+    setNeoPixelColor(255, 0, 0);
 
     delay(5000);
     Serial.begin(115200);
@@ -22,6 +24,8 @@ void setup() {
 
     digitalWrite(LED_BUILTIN, LOW);
     Serial.println("----- Initialization Complete -----");
+
+    setNeoPixelColor(0, 255, 0);
 }
 
 void loop() {

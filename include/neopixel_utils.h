@@ -4,10 +4,10 @@
 #include <Adafruit_NeoPixel.h>
 #include <Arduino.h>
 
-Adafruit_NeoPixel pixel;
+extern Adafruit_NeoPixel neoPixel;
 
 void initializeNeoPixel();
 
-void setPixelColor(int r, int g, int b);
+void setNeoPixelColor(int r, int g, int b);
 
 #endif
