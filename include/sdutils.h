@@ -1,6 +1,7 @@
 #ifndef SDUTILS
 #define SDUTILS
 
+#include "utils.h"
 #include <Arduino.h>
 #include <SD.h>
 
@@ -12,7 +13,7 @@ Begins communication with the SDCard using SD.h
 
 Logs either success or failure depending on
 */
-void mountSDCard(int cs_pin);
+boolean mountSDCard(int cs_pin);
 
 /*
 Logs the following about the inserted SD card:

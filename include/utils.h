@@ -3,6 +3,6 @@
 
 #include <Arduino.h>
 
-void startup();
+void printHeader(const char *header);
 
 #endif

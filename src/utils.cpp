@@ -1,13 +1,17 @@
 #include "utils.h"
 
-/*
-Starts up with a delay in order to give time for the serial
-monitor to connect
-*/
-void startup() {
-    pinMode(LED_BUILTIN, OUTPUT);
+void printHeader(const char *header) {
+    int length = strlen(header);
 
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(5000);
-    Serial.begin(115200);
+    for (int i = 0; i < length + 4; i++) {
+        Serial.printf("-");
+    }
+    Serial.print("\n");
+
+    Serial.printf("| %s |\n", header);
+
+    for (int i = 0; i < length + 4; i++) {
+        Serial.printf("-");
+    }
+    Serial.print("\n");
 }
