@@ -4,6 +4,7 @@
 #include <Adafruit_DPS310.h>
 #include <Adafruit_GPS.h>
 #include <Adafruit_ICM20948.h>
+#include <Adafruit_MAX1704X.h>
 #include <Adafruit_NeoPixel.h>
 #include <Arduino.h>
 #include <SD.h>
@@ -12,15 +13,18 @@
 #define GPSSerial Serial1
 
 boolean INIT_FAILED = false;
+boolean BATTERY_POWER = false;
 
 Adafruit_DPS310 DPS;
 Adafruit_ICM20948 ICM;
 Adafruit_GPS GPS(&GPSSerial);
+Adafruit_MAX17048 maxLipo;
 
 boolean initializeDPS();
 boolean initializeSDCard();
 boolean initializeICM();
 boolean initializeGPS();
+boolean initializeBatteryMonitor();
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -34,6 +38,9 @@ void setup() {
     Serial.println("");
     Serial.println("----- Initialization Begin -----");
 
+    // Initialize onboard battery monitor
+    initializeBatteryMonitor();
+
     // Initialize breakout boards
     initializeDPS();
     initializeICM();
@@ -46,6 +53,28 @@ void setup() {
     Serial.println("----- Initialization Complete -----");
 }
 
+boolean initializeBatteryMonitor() {
+    printHeader("BATTERY MONITOR INIT");
+
+    if (!maxLipo.begin()) {
+        Serial.println("\tFailed to initialize Battery Monitor");
+        Serial.println("\tCheck battery for issues or loose plug");
+        Serial.println("\tAssuming no battery present");
+
+        return false;
+    }
+
+    BATTERY_POWER = true;
+
+    Serial.println("\tBattery monitor initialized");
+    return true;
+}
+
+/*
+Start serial communication with the GPS unit
+Sets Rate to 5Hz
+Sets Output to RMC only
+*/
 boolean initializeGPS() {
     printHeader("GPS INIT");
 
@@ -108,6 +137,7 @@ boolean initializeICM() {
     Serial.println("\tSet Gyro Range: 500 dps (degrees per second)");
 
     Serial.println("\tICM Initialized");
+
     return true;
 }
 
@@ -130,4 +160,64 @@ boolean initializeSDCard() {
 }
 
 void loop() {
+    sensors_event_t temperature_event, pressure_event;
+    sensors_event_t accel_event, gyro_event, mag_event, temp_event;
+
+    Serial.printf("Battery Percent: %f, Battery Voltage: %f\n", maxLipo.cellPercent(), maxLipo.cellVoltage());
+
+    if (DPS.pressureAvailable() && DPS.temperatureAvailable()) {
+        DPS.getEvents(&temperature_event, &pressure_event);
+
+        Serial.printf("Temp: %f C\n", temperature_event.temperature);
+        Serial.printf("Pressure: %f hPa\n", pressure_event.pressure);
+
+        float altitude = 145366.45 * ((1 - pow((pressure_event.pressure / 1013.25), 0.190284)));
+
+        Serial.printf("Altitude: %f ft\n", altitude);
+    }
+
+    if (ICM.getEvent(&accel_event, &gyro_event, &mag_event, &temp_event)) {
+        Serial.printf("Accel: [x] - %f, [y] - %f, [z] - %f\n", accel_event.acceleration.x, accel_event.acceleration.y, accel_event.acceleration.z);
+        Serial.printf("Gyro: [x] - %f, [y] - %f, [z] - %f\n", gyro_event.gyro.x, gyro_event.gyro.y, gyro_event.gyro.z);
+    }
+
+    if (GPS.available()) {
+        while (1) {
+            GPS.read();
+
+            if (GPS.newNMEAreceived()) {
+                Serial.println("NMEA Sentence");
+                Serial.printf("%s\n", GPS.lastNMEA());
+                break;
+            }
+        }
+    }
+
+    // char c;
+    // char buffer[256] = "";
+    // bool startSentence = false;
+    // int bufferIndex = 0;
+
+    // if (GPS.available()) {
+    //     while (1) {
+    //         c = GPS.read();
+
+    //         if (c == '$') {
+    //             startSentence = true;
+    //         }
+
+    //         if (startSentence) {
+    //             buffer[bufferIndex] = c;
+    //             bufferIndex += 1;
+    //         }
+
+    //         if (c == '\n' && startSentence) {
+    //             buffer[bufferIndex] = '\0';
+    //             Serial.println("Serial Sentence");
+    //             Serial.print(buffer);
+    //             break;
+    //         }
+    //     }
+    // }
+    delay(1000);
 }
